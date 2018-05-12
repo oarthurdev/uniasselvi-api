@@ -1,0 +1,54 @@
+{% include 'template.twig' %}
+<form action="{{action}}" method="{{method}}" name="form-login" id="form-login" class="form-login-class">
+  <img src="assets/imgs/logo.png" class="logoLogin"/>
+  <input type="text" name="username" id="username" class="user-class form-control" placeholder="Usuário" value="{{username}}" required />
+  <input type="password" name="password" id="password" class="password-class form-control mgtp-5px" value="{{password}}" placeholder="Senha" required />
+  <input type="hidden" name="sessao" id="sessao" value="{{sessao}}"/>
+  <input type="submit" name="btn-logar" id="btn-logar" class="btn-logar-class form-control btn-success mgtp-5px" value="Logar"/>
+  <div class="alert alert-danger uspass-wrong mgtp-5px" name="errolog" id="errolog" role="alert">
+    <p class="color-black">Usuário ou senha incorretos.</p>
+  </div>
+  <div class="alert alert-success alert-logando mgtp-5px" name="logandolog" id="logandolog" role="alert">
+  <p class="color-black">Dados corretos, você está sendo logado.</p>
+</div>
+</form>
+<script>
+$(document).ready(function(){
+
+    var sessao = localStorage.getItem('sessao');
+    var username = localStorage.getItem('username');
+
+  	$('#errolog').hide(); //Esconde o elemento com id errolog
+    $('#logandolog').hide();
+    var divLogando = document.getElementById('logandolog');
+  	$('#form-login').submit(function(event){ 	//Ao submeter formulário
+      event.preventDefault();
+  		var login=$('#username').val();	//Pega valor do campo email
+  		var senha=$('#password').val();	//Pega valor do campo senha
+      var sessao2=$('#sessao').val()
+      var div = document.getElementById('errolog');
+  		$.ajax({			//Função AJAX
+  			url:"http://local.gothicpt.com/painelgmgothicpt/verifica-login",			//Arquivo php
+  			type:"post",				//Método de envio
+  			data: "username="+login+"&password="+senha+"&sessao="+sessao2,	//Dados
+     			success: function (data){			//Sucesso no AJAX
+                  		if(data){
+                        $('#logandolog').show();
+                        localStorage.setItem("sessao", data.sessao);
+                        localStorage.setItem("username", data.username);
+                        window.location.href = "/painelgmgothicpt/home";
+
+                      }else{
+                  			$('#errolog').show();		//Informa o erro
+                        localStorage.removeItem("username");
+                        setTimeout(function() {
+                            div.style.display = 'none';
+                        }, 5000);
+                        return false;
+                  		}
+              		}
+  		})
+  		return false;	//Evita que a página seja atualizada
+  	})
+})
+</script>
