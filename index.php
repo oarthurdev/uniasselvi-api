@@ -19,7 +19,7 @@ $app->register(new Silex\Provider\SessionServiceProvider());
 
 $app['session.storage.handler'] = null;
 
-error_reporting(0);
+error_reporting(E_ALL);
 
 ini_set('display_errors', true);
 
@@ -29,9 +29,22 @@ $app['user.controller'] = function ($app) {
     return new User\UserController();
 };
 
+$app->before(function (Request $request, Application $app) {
+  $token = $request->headers->get('Token');
+  $method = $request->getMethod();
+  $route = $request->getPathInfo();
+
+  $sql = "SELECT username FROM users WHERE token = :token";
+  $user = $app['db']->fetchAssoc($sql, array('token' => $token));
+
+  if (!$user && $method != 'OPTIONS' && $route != '/login') {
+    return new \Symfony\Component\HttpFoundation\JsonResponse(null, 401);
+  }
+}, Application::EARLY_EVENT);
+
 $app->after(function (Request $request, Response $response) {
   $response->headers->set('Access-Control-Allow-Origin', '*');
-  $response->headers->set('Access-Control-Allow-Headers', 'Access-Control-Allow-Origin, Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  $response->headers->set('Access-Control-Allow-Headers', 'Access-Control-Allow-Origin, Token, Origin, X-Requested-With, Content-Type, Accept, Authorization');
 });
 
 $app->options("{anything}", function () {
@@ -42,18 +55,12 @@ $app->get('/', function(Application $app){
   return $app->redirect('/painelgmgothicpt/login');
 });
 $app->get('/login', function(Request $request) use ($app){
-  $token = md5(uniqid());
-
-  $session = $app['session'];
-  if($session->has('username')){
-    return $app->redirect('/painelgmgothicpt/home');
-  }
+   
   return $app['twig']->render('login.twig', array(
     'username' => $username,
     'password' => $password,
     'action' => '/painelgmgothicpt/verifica-login',
     'method' => 'post',
-    'sessao' => $token,
     'cargo' => $cargo
   ));
 })
@@ -70,42 +77,20 @@ $app->post('/login', function(Request $request) use ($app){
   $token = md5(uniqid());
   $params = $request->request->all();
 
- 
-
-  if ($username == null) {
-        return $app->redirect('/painelgmgothicpt/login');
-    }
-  // $session->set('username', array('username' => $username));
-
-  // $token = $data['sessao'];
-
   $sql = 'SELECT * FROM users WHERE username = :username AND password = :password';
   $post = $app['db']->fetchAssoc($sql, array('username' => $data['username'], 'password' => $data['password']));
-  // $session->set('cargo', array('cargo' => $post['cargo']));
-  // $session->set('nick', array('nick' => $post['nick']));
-  // $session->set('permissao', array('permissao' => $post['permissao']));
+ 
   $sql1 = "UPDATE users SET token = :token WHERE username = :username";
   $stmt = $app['db']->prepare($sql1);
   $stmt->bindValue("token", $token);
   $stmt->bindValue("username", $data['username']);
   $stmt->execute();
 
-  $sql2 = "SELECT activated FROM users WHERE username = :username";
-  $activated = $app['db']->fetchAssoc($sql2, array('username' => $data['username']));
-
-  // $session->set('token', array('token' => $post['token']));
-
-  // if($post['username'] == $params['username']){
-  //   return $app->redirect('/painelgmgothicpt/home?sessao=' . $post['token']);
-  // }
-  // else{
-  //   $session->clear();
-  //   exit;
-  // }
+  $post['token'] = $token;
 
   return $app->json(array(
     'dados' => $post,
-    'activated' => $activated
+    'activated' => $post['activated']
     ),200);
 })
 ->bind('verifica-login');
@@ -124,6 +109,16 @@ $app->post('/profile', function(Request $request) use ($app){
   return true;
 })
 ->bind('profile');
+
+$app->post('/remove-token', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+
+  $updateToken0 = "UPDATE users SET token = '0' WHERE username = :username";
+  $stmt = $app['db']->prepare($updateToken0);
+  $stmt->bindValue("username", $data['username']);
+  return true;
+})
+->bind('remove-token');
 
 $app->get('/logout', function(Application $app){
   $session = $app['session'];
@@ -314,9 +309,6 @@ $app->post('/banir-jogador-success', function(Request $request) use ($app){
   $stmt->bindValue("userid", $post['userid']);
   $stmt->execute();
 
- 
-  
-
   $dados = $stmt->fetch(PDO::FETCH_ASSOC);
   $sql1 = "update [accountdb].[dbo].[".strtoupper($data[idPlayer][0])."GameUser] set blockchk = $punicaoNUM where userid = :userid";
   $stmt = $app['db']->prepare($sql1);
@@ -361,10 +353,7 @@ $app->get('/procurar-jogador', function(Request $request) use ($app){
   $params = $request->request->all();
   
   $UsuarioLogado = implode("", $username);
-
-  if (null === $username  = $app['session']->get('username')) {
-        return $app->redirect('login');
-    }
+  
   return $app['twig']->render('gerenciar-players/procurar-jogador.twig', array(
     'sessao' => $params['sessao'],
     'username' => $UsuarioLogado,
@@ -509,9 +498,7 @@ $app->post('/procurar-logs-success', function(Request $request) use ($app){
     }
   
   }  
-  if (null === $username  = $app['session']->get('username')) {
-        return $app->redirect('login');
-    }
+  
   return false;
 })
 ->bind('procurar-logs-success');
@@ -532,7 +519,7 @@ $app->get('/jogadores-punidos', function(Request $request) use ($app){
 $app->get('/gms-cadastrados', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);      
 
-  $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data from users";
+  $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data from users order by data desc";
   $stmt = $app['db']->prepare($logsBan);
   $stmt->execute();
 
