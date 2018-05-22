@@ -54,24 +54,13 @@ $app->options("{anything}", function () {
 $app->get('/', function(Application $app){
   return $app->redirect('/painelgmgothicpt/login');
 });
-$app->get('/login', function(Request $request) use ($app){
-   
-  return $app['twig']->render('login.twig', array(
-    'username' => $username,
-    'password' => $password,
-    'action' => '/painelgmgothicpt/verifica-login',
-    'method' => 'post',
-    'cargo' => $cargo
-  ));
-})
-->bind('login');
 
 $app->post('/login', function(Request $request) use ($app){
   error_reporting(E_ALL);
   ini_set('display_errors', true);
 
   $data = json_decode($request->getContent(), true);
-      
+  
   $username = $data['username'];
   $password = $data['password'];
   $token = md5(uniqid());
@@ -79,18 +68,23 @@ $app->post('/login', function(Request $request) use ($app){
 
   $sql = 'SELECT * FROM users WHERE username = :username AND password = :password';
   $post = $app['db']->fetchAssoc($sql, array('username' => $data['username'], 'password' => $data['password']));
- 
-  $sql1 = "UPDATE users SET token = :token WHERE username = :username";
-  $stmt = $app['db']->prepare($sql1);
-  $stmt->bindValue("token", $token);
-  $stmt->bindValue("username", $data['username']);
-  $stmt->execute();
+  
+  $activated = 'SELECT activated FROM users WHERE username = :username';
+  $postA = $app['db']->fetchAssoc($activated, array('username' => $data['username']));
+
+  if($postA['activated'] != '0'){
+    $sql1 = "UPDATE users SET token = :token WHERE username = :username";
+    $stmt = $app['db']->prepare($sql1);
+    $stmt->bindValue("token", $token);
+    $stmt->bindValue("username", $data['username']);
+    $stmt->execute();
+  }
 
   $post['token'] = $token;
 
   return $app->json(array(
     'dados' => $post,
-    'activated' => $post['activated']
+    'activated' => $postA['activated']
     ),200);
 })
 ->bind('verifica-login');
@@ -109,16 +103,6 @@ $app->post('/profile', function(Request $request) use ($app){
   return true;
 })
 ->bind('profile');
-
-$app->post('/remove-token', function(Request $request) use ($app){
-  $data = json_decode($request->getContent(), true);
-
-  $updateToken0 = "UPDATE users SET token = '0' WHERE username = :username";
-  $stmt = $app['db']->prepare($updateToken0);
-  $stmt->bindValue("username", $data['username']);
-  return true;
-})
-->bind('remove-token');
 
 $app->get('/logout', function(Application $app){
   $session = $app['session'];
@@ -529,6 +513,16 @@ $app->get('/gms-cadastrados', function(Request $request) use ($app){
 })
 ->bind('gms-cadastrados');
 
+$app->post('/remove-token', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+  
+  $updateToken0 = "UPDATE users SET token = 0 WHERE token = :token";
+  $stmt = $app['db']->prepare($updateToken0);
+  $stmt->bindValue("token", $data['token']);
+  $stmt->execute();
+  return true;
+})
+->bind('remove-token');
 
 
 $app->register(new Silex\Provider\TwigServiceProvider(), array(
