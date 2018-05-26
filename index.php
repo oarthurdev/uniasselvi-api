@@ -25,6 +25,10 @@ ini_set('display_errors', true);
 
 include "include/banco.inc.php";
 
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token');
+
 $app['user.controller'] = function ($app) {
     return new User\UserController();
 };
