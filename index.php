@@ -152,7 +152,12 @@ $app->post('/enviar-itens', function(Request $request) use ($app){
 	return $total;
 }
   $procuraPlayer = ''.$rootDir.'DataServer/userdata/'.subDiretorio($nick).'/'.$nick.'.dat';
+  $procuraItem = ''.$rootDir.'GameServer/OpenItem/'.$item.'.txt';
 		if(!file_exists($procuraPlayer)){
+      return false;
+      exit;
+    }
+    if(!file_exists($procuraItem)){
       return false;
       exit;
     }
