@@ -109,7 +109,8 @@ $app->post('/enviar-itens', function(Request $request) use ($app){
   $nick = $data['nomeJogador'];
   $class = $data['classe'];
   $item = $data['item'];
-  
+  $qtdItens = $data['quantidade'];
+
   $ip = $_SERVER["REMOTE_ADDR"];
   $datahoje = date("d-m-Y h:i:s A");
   
@@ -186,7 +187,9 @@ $pasta_entrega = "".$rootDir."PostBox/".subDiretorio($PlayerID)."/".$PlayerID.".
 if (file_exists($pasta_entrega)) {
 $fp = fopen($pasta_entrega, "a+");
 //Escreve o pedido
-$escreve = fwrite($fp, "$dados_item");
+for($i = 0; $i < $qtdItens; $i++){
+  $escreve = fwrite($fp, "$dados_item");
+}
 // Fecha o arquivo
 fclose($fp);
 } else {
