@@ -25,10 +25,6 @@ ini_set('display_errors', true);
 
 include "include/banco.inc.php";
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token');
-
 $app['user.controller'] = function ($app) {
     return new User\UserController();
 };
@@ -107,6 +103,113 @@ $app->post('/profile', function(Request $request) use ($app){
   return true;
 })
 ->bind('profile');
+
+$app->post('/enviar-itens', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+  $nick = $data['nomeJogador'];
+  $class = $data['classe'];
+  $item = $data['item'];
+  
+  $ip = $_SERVER["REMOTE_ADDR"];
+  $datahoje = date("d-m-Y h:i:s A");
+  
+  if($class == '1'){
+    $classTXT = 'Lutador';
+  }
+  if($class == '2'){
+    $classTXT = 'Mecânico';
+  }
+  if($class == '3'){
+    $classTXT = 'Arqueira';
+  }
+  if($class == '4'){
+    $classTXT = 'Pikeman';
+  }
+  if($class == '5'){
+    $classTXT = 'Atalanta';
+  }
+  if($class == '6'){
+    $classTXT = 'Cavaleiro';
+  }
+  if($class == '7'){
+    $classTXT = 'Mago';
+  }
+  if($class == '8'){
+    $classTXT = 'Priest';
+  }
+  $rootDir = 'C:/projects/GameDev/Private/PristonTale/source-gothic-priston-tale/bin/Server/';
+  function subDiretorio($pasta) {
+ 	$total = 0;
+	for($i=0;$i<strlen($pasta);$i++)
+	{			
+		$total += ord(strtoupper($pasta[$i]));
+			if($total >= 256)
+			{
+				$total = $total - 256;
+			}
+		
+	}
+	return $total;
+}
+  $procuraPlayer = ''.$rootDir.'DataServer/userdata/'.subDiretorio($nick).'/'.$nick.'.dat';
+		if(!file_exists($procuraPlayer)){
+      return false;
+      exit;
+    }
+    else{
+    $aberto = fopen($procuraPlayer, "r");
+    $conteudoDat =fread($aberto,filesize($procuraPlayer));
+    @fclose($aberto);
+    
+    $procuraPlayer = ''.$rootDir.'DataServer/userdata/'.subDiretorio($nick).'/'.$nick.'.dat';
+if(file_exists($procuraPlayer))
+{
+
+// l� o arquivo para descobrir a ID
+$aberto = fopen($procuraPlayer, "r");
+$conteudoDat =fread($aberto,filesize($procuraPlayer));
+@fclose($aberto);
+
+$PlayerID = trim(substr($conteudoDat,0x2c0,10),"\x00");
+}
+    //Dados do Item
+$dados_item = "$nick $item  $class \"Obrigado por jogar GothicPT!!\"". "\r\n";
+
+//Pasta de entrega
+$pasta_entrega = "".$rootDir."PostBox/".subDiretorio($PlayerID)."/".$PlayerID.".dat";
+//Enviando o Item para o Distribuidor
+if (file_exists($pasta_entrega)) {
+$fp = fopen($pasta_entrega, "a+");
+//Escreve o pedido
+$escreve = fwrite($fp, "$dados_item");
+// Fecha o arquivo
+fclose($fp);
+} else {
+copy("shop.dat",$pasta_entrega);
+$fp = fopen($pasta_entrega, "r+");
+//Escreve o pedido
+$escreve = fwrite($fp, "$dados_item");
+// Fecha o arquivo
+fclose($fp);
+}
+}
+  if($escreve){
+    $app['db']->insert('LogsDistribuidor', array(
+      'idGM' => $data['idGM'],
+      'item' => $item,
+      'classe' => $classTXT,
+      'nick' => $nick,
+      'idUser' => $PlayerID,
+      'data' => $datahoje,
+      'ip' => $ip
+    ));
+  }
+  else{
+    return false;
+  }
+  return true;
+})
+->bind('enviar-itens');
 
 $app->get('/logout', function(Application $app){
   $session = $app['session'];
