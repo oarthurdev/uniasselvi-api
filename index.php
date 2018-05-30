@@ -113,7 +113,10 @@ $app->post('/enviar-itens', function(Request $request) use ($app){
 
   $ip = $_SERVER["REMOTE_ADDR"];
   $datahoje = date("d-m-Y h:i:s A");
-  
+
+  if($class == '0'){
+    $classTXT = 'Sem Classe';
+  }
   if($class == '1'){
     $classTXT = 'Lutador';
   }
