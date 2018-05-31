@@ -497,99 +497,60 @@ $app->post('/procurar-jogador-success', function(Request $request) use ($app){
 })
 ->bind('procurar-jogador-success');
 
-$app->get('/logs', function(Request $request) use ($app){
-  $session = $app['session'];
-  $username = $app['session']->get('username');
-  $cargo = $app['session']->get('cargo');
-  $nick = $app['session']->get('nick');
-  $permissao = $app['session']->get('permissao');
-  $params = $request->request->all();
-  
-  $UsuarioLogado = implode("", $username);
+$app->post('/logs', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);      
 
-  if (null === $username  = $app['session']->get('username')) {
-        return $app->redirect('login');
+  $arr = [];
+  $dataInicial = $data['dataProcurar'];
+
+  if($data['logType'] == "LogAdmin"){
+    $date = date_create($data['dataProcurar']);
+    $data['dataProcurar'] = date_format($date, 'n-j');
+    $caminho = 'C:/Server/LogAdmin/(Admin)' . $data['dataProcurar'] . '.log';
+    if(!file_exists($caminho)){
+      return false;
+      exit;
     }
-  return $app['twig']->render('gerenciar-logs/logs.twig', array(
-    'sessao' => $params['sessao'],
-    'username' => $UsuarioLogado,
-    'cargo' => implode('', $cargo),
-    'nick' => implode('', $nick),
-    'permissao' => implode('', $permissao),
-    'title' => "GothicPT Administração | Logs"
-  ));
-})
-->bind('logs');
-
-$app->post('/procurar-logs-success', function(Request $request) use ($app){
-  $session = $app['session'];
-  $username = $app['session']->get('username');
-  $cargo = $app['session']->get('cargo');
-  $nick = $app['session']->get('nick');
-  $permissao = $app['session']->get('permissao');
-  $params = $request->request->all();
-
-  $UsuarioLogado = implode("", $username);
-  $date = date_create($params['datepicker']);
-  $params['datepicker'] = date_format($date, 'n-j');
-
-  if($params['procurarPor'] == "LogAdmin"){
-    $caminho = 'C:/Server/LogAdmin/(Admin)' . $params['datepicker'] . '.log';
   }
-  else if($params['procurarPor'] == "LogDebug"){
-    $caminho = 'C:/Server/LogDebug/' . $params['datepicker'] . '.log';
-  }
-  else if($params['procurarPor'] == "LogFile"){
-    $caminho = 'C:/Server/LogFile/' . $params['datepicker'] . '.log';
-  }
-  else if($params['procurarPor'] == "LogItem"){
-    $caminho = 'C:/Server/LogFile/(Item)' . $params['datepicker'] . '.log';
-  }
+  // else if($params['procurarPor'] == "LogDebug"){
+  //   $caminho = 'C:/Server/LogDebug/' . $params['datepicker'] . '.log';
+  // }
+  // else if($params['procurarPor'] == "LogFile"){
+  //   $caminho = 'C:/Server/LogFile/' . $params['datepicker'] . '.log';
+  // }
+  // else if($params['procurarPor'] == "LogItem"){
+  //   $caminho = 'C:/Server/LogFile/(Item)' . $params['datepicker'] . '.log';
+  // }
 
   $arquivo = file($caminho);
-  if($params['procurarPor'] == "LogAdmin"){
+  if($data['logType'] == "LogAdmin"){
     foreach ($arquivo as $linha) {
+
+      $dateLog = preg_match_all("/[0-9]{2}:[0-9]{2}:[0-9]{2}/", $linha, $match2);
 
       $result = preg_match_all("/\( [^)]* \)*/", $linha, $match);
     
       $accountName = str_replace(array('( ', ' )'), '', $match[0][0]);
       $nickName = str_replace(array('( ', ' )'), '', $match[0][1]);
       $ipAddress = str_replace(array('( ', ' )'), '', $match[0][2]);
-      // Executa nossa expressão
-    
-      if (($params['SearchFor1'] == $accountName) || ($params['SearchFor1'] == $nickName) || ($params['SearchFor1'] == $ipAddress)) {
-        return $app->json(array(
-          "accountname" => $accountName,
-          "nickname" => $nickName,
-          "ipaddress" => $ipAddress
-        ), 200);
-    
-      } 
-      else{
-        return false;
-      }
-      
-      
-    }
-  }
-  else if($params['procurarPor'] == "LogItem"){
-    foreach ($arquivo as $linha) {
+      $dataLog2 = str_replace(array('( ', ' )'), '', $match2[0][0]);
 
-      $result = preg_match_all("/\( [^)]* \)*/", $linha, $match);
-      echo "<pre>";
-      print_r($match);
-      exit;
-      $name = str_replace(array('( ', ' )'), '', $match[0][0]);
-      $level = str_replace(array('( ', ' )'), '', $match[0][1]);
-      $item = str_replace(array('( ', ' )'), '', $match[0][2]);
       // Executa nossa expressão
-     
-      if (($params['SearchFor1'] == $name) || ($params['SearchFor1'] == $level) || ($params['SearchFor1'] == $item)) {
-        return $app->json(array(
-          "name" => $name,
-          "level" => $level,
-          "item" => $item
-        ), 200);
+    
+      if (($data['procurarPor2'] == $accountName) || ($data['procurarPor2'] == $nickName) || ($data['procurarPor2'] == $ipAddress)) {
+        $arr[] = array(
+            "accountname" => $accountName,
+             "nickname" => $nickName,
+             "ipaddress" => $ipAddress,
+             "data" => $dataInicial . " " .$dataLog2
+            );
+        // return $app->json(array(
+        //   array(
+        //   "accountname" => $accountName,
+        //   "nickname" => $nickName,
+        //   "ipaddress" => $ipAddress
+        // )
+        // ), 200);
     
       } 
       else{
@@ -598,12 +559,40 @@ $app->post('/procurar-logs-success', function(Request $request) use ($app){
       
       
     }
+    return $app->json($arr);
+  }
+  // else if($params['procurarPor'] == "LogItem"){
+  //   foreach ($arquivo as $linha) {
+
+  //     $result = preg_match_all("/\( [^)]* \)*/", $linha, $match);
+  //     echo "<pre>";
+  //     print_r($match);
+  //     exit;
+  //     $name = str_replace(array('( ', ' )'), '', $match[0][0]);
+  //     $level = str_replace(array('( ', ' )'), '', $match[0][1]);
+  //     $item = str_replace(array('( ', ' )'), '', $match[0][2]);
+  //     // Executa nossa expressão
+     
+  //     if (($params['SearchFor1'] == $name) || ($params['SearchFor1'] == $level) || ($params['SearchFor1'] == $item)) {
+  //       return $app->json(array(
+  //         "name" => $name,
+  //         "level" => $level,
+  //         "item" => $item
+  //       ), 200);
+    
+  //     } 
+  //     else{
+  //       return false;
+  //     }
+      
+      
+  //   }
   
-  }  
+  // }  
   
-  return false;
+  return true;
 })
-->bind('procurar-logs-success');
+->bind('logs');
 
 $app->get('/jogadores-punidos', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);      
