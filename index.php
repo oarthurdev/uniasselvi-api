@@ -381,7 +381,8 @@ $app->post('/register-gm-successfull', function(Request $request) use ($app){
     'activated' => $data['activated'],
     'data' => $dataHoje,
     'cadPor' => $data['cadastradoPor'],
-    'token' => md5(uniqid())
+    'token' => md5(uniqid()),
+    'photo' => 'default.jpg'
   ));
 
   return $app->json(array(
@@ -617,12 +618,20 @@ $app->post('/upload-image', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
 
   $username = $_POST['username'];
-  $photo = $_FILES["file"]["name"];
+
+  $_FILES["file"]["name"] = md5(uniqid()) . '-' . $_FILES["file"]["name"];
   $uploadfileuser = PATHUPLOADUSERIMAGE . $_FILES["file"]["name"];
 
+  $photo = $_FILES["file"]["name"];
+
+  if(($_FILES['file']['type'] == 'image/png') || ($_FILES['file']['type'] == 'image/jpeg')){
+  }
+  else{
+    return false;
+    exit;
+  }
   if ($_FILES['file']['error'] == UPLOAD_ERR_OK) {
-    $tmp_name = $_FILES['file']["tmp_name"];
-    $name = $_FILES['file']["name"];
+    $tmp_name = $_FILES['file']["tmp_name"];;
     move_uploaded_file($tmp_name, $uploadfileuser);
     
     $updatePhoto = "UPDATE users SET photo = :photo WHERE username = :username";
