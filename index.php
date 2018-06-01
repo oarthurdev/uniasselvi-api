@@ -7,6 +7,9 @@ use Silex\Provider\UrlGeneratorServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\DBAL\Configuration;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+
+define('PATHUPLOADUSERIMAGE', 'C:/xampp/htdocs/painelgmgothicpt/Upload/User/ImagemPerfil/');
 
 date_default_timezone_set('America/Sao_Paulo');
 
@@ -141,7 +144,7 @@ $app->post('/enviar-itens', function(Request $request) use ($app){
   if($class == '8'){
     $classTXT = 'Priest';
   }
-  $rootDir = 'C:/projects/GameDev/Private/PristonTale/source-gothic-priston-tale/bin/Server/';
+  $rootDir = 'C:/Server/';
   function subDiretorio($pasta) {
  	$total = 0;
 	for($i=0;$i<strlen($pasta);$i++)
@@ -199,7 +202,9 @@ fclose($fp);
 copy("shop.dat",$pasta_entrega);
 $fp = fopen($pasta_entrega, "r+");
 //Escreve o pedido
-$escreve = fwrite($fp, "$dados_item");
+for($i = 0; $i < $qtdItens; $i++){
+  $escreve = fwrite($fp, "$dados_item");
+}
 // Fecha o arquivo
 fclose($fp);
 }
@@ -526,6 +531,8 @@ $app->post('/logs', function(Request $request) use ($app){
   if($data['logType'] == "LogAdmin"){
     foreach ($arquivo as $linha) {
 
+      $logR = preg_match_all("/\/.+/", $linha, $match3);
+
       $dateLog = preg_match_all("/[0-9]{2}:[0-9]{2}:[0-9]{2}/", $linha, $match2);
 
       $result = preg_match_all("/\( [^)]* \)*/", $linha, $match);
@@ -534,6 +541,7 @@ $app->post('/logs', function(Request $request) use ($app){
       $nickName = str_replace(array('( ', ' )'), '', $match[0][1]);
       $ipAddress = str_replace(array('( ', ' )'), '', $match[0][2]);
       $dataLog2 = str_replace(array('( ', ' )'), '', $match2[0][0]);
+      $log = str_replace(array('( ', ' )'), '', $match3[0][0]);
 
       // Executa nossa expressão
     
@@ -542,7 +550,8 @@ $app->post('/logs', function(Request $request) use ($app){
             "accountname" => $accountName,
              "nickname" => $nickName,
              "ipaddress" => $ipAddress,
-             "data" => $dataInicial . " " .$dataLog2
+             "data" => $dataInicial . " " .$dataLog2,
+             "log" => $log
             );
         // return $app->json(array(
         //   array(
@@ -593,6 +602,42 @@ $app->post('/logs', function(Request $request) use ($app){
   return true;
 })
 ->bind('logs');
+
+$app->post('/get-photo', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+
+  $sql = "SELECT photo FROM users WHERE username = :username";
+  $photo = $app['db']->fetchAssoc($sql, array('username' => $data['username']));
+
+  return $app->json($photo, 200);
+})
+->bind('get-photo');
+
+$app->post('/upload-image', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+
+  $username = $_POST['username'];
+  $photo = $_FILES["file"]["name"];
+  $uploadfileuser = PATHUPLOADUSERIMAGE . $_FILES["file"]["name"];
+
+  if ($_FILES['file']['error'] == UPLOAD_ERR_OK) {
+    $tmp_name = $_FILES['file']["tmp_name"];
+    $name = $_FILES['file']["name"];
+    move_uploaded_file($tmp_name, $uploadfileuser);
+    
+    $updatePhoto = "UPDATE users SET photo = :photo WHERE username = :username";
+    $stmt = $app['db']->prepare($updatePhoto);
+    $stmt->bindValue("photo", $photo);
+    $stmt->bindValue("username", $username);
+    $stmt->execute();
+  }
+  else {
+    echo 'Erro ao enviar imagem!';
+    exit;
+  }
+  return true;
+})
+->bind('upload-image');
 
 $app->get('/jogadores-punidos', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);      
