@@ -107,6 +107,17 @@ $app->post('/profile', function(Request $request) use ($app){
 })
 ->bind('profile');
 
+$app->post('/delete-game-master', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+
+  $sql = "DELETE FROM users WHERE username = :username";
+  $stmt = $app['db']->prepare($sql);
+  $stmt->bindValue("username", $data['username']);
+  $stmt->execute();
+  return true;
+})
+->bind('delete-game-master');
+
 $app->post('/enviar-itens', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
   $nick = $data['nomeJogador'];
