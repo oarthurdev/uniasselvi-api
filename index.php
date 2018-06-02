@@ -675,6 +675,9 @@ $app->get('/jogadores-punidos', function(Request $request) use ($app){
 $app->get('/gms-cadastrados', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);      
 
+  // echo "<pre>";
+  // print_r($data);
+  // exit;
   $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data from users order by data desc";
   $stmt = $app['db']->prepare($logsBan);
   $stmt->execute();
