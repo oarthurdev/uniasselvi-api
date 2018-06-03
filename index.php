@@ -688,6 +688,19 @@ $app->get('/gms-cadastrados', function(Request $request) use ($app){
 })
 ->bind('gms-cadastrados');
 
+$app->get('/get-data-gm', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);      
+
+  $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data from users order by data desc";
+  $stmt = $app['db']->prepare($logsBan);
+  $stmt->execute();
+
+  $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  return $app->json($dados, 200);
+})
+->bind('get-data-gm');
+
 $app->post('/remove-token', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
   
