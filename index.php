@@ -109,11 +109,20 @@ $app->post('/profile', function(Request $request) use ($app){
 
 $app->post('/delete-game-master', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
-
+  
+  $excluidoEm = date("d-m-Y h:i:s A");
+  $excluidoPor = $data['excluidoPor'];
+  $username = $data['username'];
   $sql = "DELETE FROM users WHERE username = :username";
   $stmt = $app['db']->prepare($sql);
-  $stmt->bindValue("username", $data['username']);
+  $stmt->bindValue("username", $username);
   $stmt->execute();
+
+  $app['db']->insert('LogsUsersDeletados', array(
+    'username' => $username,
+    'deletedAt' => $excluidoEm,
+    'deletedBy' => $excluidoPor
+  ));
   return true;
 })
 ->bind('delete-game-master');
@@ -688,16 +697,17 @@ $app->get('/gms-cadastrados', function(Request $request) use ($app){
 })
 ->bind('gms-cadastrados');
 
-$app->get('/get-data-gm', function(Request $request) use ($app){
+$app->post('/edit-gm', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);      
 
-  $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data from users order by data desc";
-  $stmt = $app['db']->prepare($logsBan);
-  $stmt->execute();
+  return true;
+  // $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data from users order by data desc";
+  // $stmt = $app['db']->prepare($logsBan);
+  // $stmt->execute();
 
-  $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  // $dados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-  return $app->json($dados, 200);
+  // return $app->json($dados, 200);
 })
 ->bind('get-data-gm');
 
