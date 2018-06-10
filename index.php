@@ -687,7 +687,7 @@ $app->get('/gms-cadastrados', function(Request $request) use ($app){
   // echo "<pre>";
   // print_r($data);
   // exit;
-  $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data from users order by data desc";
+  $logsBan = "select username, nick, cargo, permissao, cadPor, activated, data, photo from users order by data desc";
   $stmt = $app['db']->prepare($logsBan);
   $stmt->execute();
 
