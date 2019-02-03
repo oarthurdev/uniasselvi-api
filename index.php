@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Doctrine\DBAL\Configuration;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-define('PATHUPLOADUSERIMAGE', 'C:/xampp/htdocs/painelgmgothicpt/Upload/User/ImagemPerfil/');
+define('PATHUPLOADUSERIMAGE', 'C:/xampp/htdocs/painelgm-api-atualizada/Upload/User/ImagemPerfil/');
 
 date_default_timezone_set('America/Sao_Paulo');
 
@@ -164,7 +164,7 @@ $app->post('/enviar-itens', function(Request $request) use ($app){
   if($class == '8'){
     $classTXT = 'Priest';
   }
-  $rootDir = 'C:/Server/';
+  $rootDir = 'C:/ServerPT/';
   function subDiretorio($pasta) {
  	$total = 0;
 	for($i=0;$i<strlen($pasta);$i++)
@@ -246,6 +246,91 @@ fclose($fp);
   return true;
 })
 ->bind('enviar-itens');
+// $app->post('/descobrir-id', function(Request $request) use ($app){
+//   $data = json_decode($request->getContent(), true);
+
+//   $rootDir = 'C:/ServidorPT/';
+//   $nick = $data['nick'];
+
+//   function subDiretorio($pasta){
+//     $total = 0;
+//     for($i=0;$i<strlen($pasta);$i++)
+//     {			
+//       $total += ord(strtoupper($pasta[$i]));
+//         if($total >= 256)
+//         {
+//           $total = $total - 256;
+//         }
+      
+//     }
+//     return $total;
+//   }
+
+//   $procuraPlayer = ''.$rootDir.'DataServer/userdata/'.subDiretorio($nick).'/'.$nick.'.dat';
+
+//   if(file_exists($procuraPlayer)){
+
+// 	// l� o arquivo para descobrir a ID
+// 	$aberto = fopen($procuraPlayer, "r");
+// 	$conteudoDat =fread($aberto,filesize($procuraPlayer));
+// 	@fclose($aberto);
+
+//   $PlayerID = trim(substr($conteudoDat,0x2c0,10),"\x00");
+  
+//   return $app->json(array(
+//     'idDescoberta' => $PlayerID
+//   ))
+// 	}
+  
+//   return true;
+// })
+// ->bind('descobrir-id');
+
+$app->post('/descobrir-id', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+  $nick = $data['nick'];
+  $rootDir = 'C:/ServerPT/';
+  function subDiretorio($pasta) {
+ 	$total = 0;
+	for($i=0;$i<strlen($pasta);$i++)
+	{			
+		$total += ord(strtoupper($pasta[$i]));
+			if($total >= 256)
+			{
+				$total = $total - 256;
+			}
+		
+	}
+	return $total;
+}
+  $procuraPlayer = ''.$rootDir.'DataServer/userdata/'.subDiretorio($nick).'/'.$nick.'.dat';
+		if(!file_exists($procuraPlayer)){
+      return false;
+      exit;
+    }
+    else{
+    $aberto = fopen($procuraPlayer, "r");
+    $conteudoDat =fread($aberto,filesize($procuraPlayer));
+    @fclose($aberto);
+    
+    $procuraPlayer = ''.$rootDir.'DataServer/userdata/'.subDiretorio($nick).'/'.$nick.'.dat';
+if(file_exists($procuraPlayer))
+{
+
+// l� o arquivo para descobrir a ID
+$aberto = fopen($procuraPlayer, "r");
+$conteudoDat =fread($aberto,filesize($procuraPlayer));
+@fclose($aberto);
+
+$PlayerID = trim(substr($conteudoDat,0x2c0,10),"\x00");
+
+return $app->json(array(
+  'id' => $PlayerID
+));
+}
+    }
+return true;
+});
 
 $app->get('/logout', function(Application $app){
   $session = $app['session'];
@@ -290,7 +375,7 @@ $app->get('/home', function(Request $request) use ($app){
 
   $dadosUltimasContasRegistradas = $stmt->fetch(PDO::FETCH_ASSOC);
 
-  $UltimasIdsRegistradas = "select userid AS uid, RegistDay AS rday from [accountdb].[dbo].[AllGameUser] WHERE RegistDay = '$dataHoje' OR RegistDay >= CAST('$dataHojeMenosDez' AS DATETIME)";
+  $UltimasIdsRegistradas = "select userid AS uid, RegistDay AS rday from [accountdb].[dbo].[AllGameUser] WHERE RegistDay = '$dataHoje' OR RegistDay >= CAST('$dataHojeMenosDez' AS DATETIME) ORDER BY RegistDay DESC";
   $stmt = $app['db']->prepare($UltimasIdsRegistradas);
   $stmt->execute();
 
@@ -413,9 +498,8 @@ $app->post('/register-gm-successfull', function(Request $request) use ($app){
 
 $app->post('/banir-jogador-success', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
-      
-  $username = $data['username'];
 
+  
   if($data['tipoPunicao'] == 0){
     $punicaoNUM = 0;
     $punicaoTXT = "Alerta";
@@ -429,7 +513,7 @@ $app->post('/banir-jogador-success', function(Request $request) use ($app){
     $punicaoTXT = "Desbanido";
   }
 
-  $datahoje = date("d/m/Y");
+  $datahoje = date("d/m/Y H:i:s");
 
   $sql = "select * from [accountdb].[dbo].[".strtoupper($data[idPlayer][0])."GameUser] where userid = :userid";
   $post = $app['db']->fetchAssoc($sql, array('userid' => $data['idPlayer']));
@@ -497,13 +581,13 @@ $app->post('/procurar-jogador-success', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);      
   
 
-  $sql = "SELECT apm.userid, apm.passwd, apm.email, apm.ip, AGU.BlockChk
-  FROM [accountdb].[dbo].[ALLPersonalMember] as apm,
+  $sql = "SELECT apm.username, apm.password, apm.email, apm.ip, AGU.BlockChk
+  FROM [PainelPlayerGothicPTByArthur].[dbo].[users] as apm,
   [accountdb].[dbo].[AllGameUser] as AGU
-  WHERE (apm.userid like :userid1
+  WHERE (apm.username like :userid1
   OR apm.ip like :userid2
   OR apm.email like :userid3)
-  AND AGU.userid = apm.Userid";
+  AND AGU.userid = apm.username";
 
   $stmt = $app['db']->prepare($sql);
   $stmt->bindValue("userid1", '%'.$data['textSearchFor'].'%');
@@ -532,7 +616,8 @@ $app->post('/logs', function(Request $request) use ($app){
   if($data['logType'] == "LogAdmin"){
     $date = date_create($data['dataProcurar']);
     $data['dataProcurar'] = date_format($date, 'n-j');
-    $caminho = 'C:/Server/LogAdmin/(Admin)' . $data['dataProcurar'] . '.log';
+    $caminho = 'C:/ServerPT/LogAdmin/(Admin)' . $data['dataProcurar'] . '.log';
+
     if(!file_exists($caminho)){
       return false;
       exit;
