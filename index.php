@@ -94,16 +94,48 @@ $app->post('/login', function(Request $request) use ($app){
 
 $app->post('/profile', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
+  $username = $data['username'];
+  $senhaAtual = $data['senhaAtual'];
+  $senhaNova1 = $data['novaSenha1'];
+  $senhaNova2 = $data['novaSenha2'];
 
-  $updateDadosProfile = "UPDATE users SET nick = :nick, password = :password, nome = :nome  WHERE username = :username";
-  $stmt = $app['db']->prepare($updateDadosProfile);
-  $stmt->bindValue("password", $data['passwordNew']);
-  $stmt->bindValue("nick", $data['nickNew']);
-  $stmt->bindValue("nome", $data['name']);
-  $stmt->bindValue("username", $data['username']);
-  $stmt->execute();
+  $sql = "SELECT password FROM users WHERE username = :username";
+  $passAtual = $app['db']->fetchAssoc($sql, array('username' => $username));
 
-  return true;
+  if(($senhaNova1 == '') || ($senhaNova2 == '') || ($senhaAtual == '')){
+    $sql = "SELECT password FROM users WHERE username = :username";
+    $passAtual = $app['db']->fetchAssoc($sql, array('username' => $username));
+
+    $alterarDados = "UPDATE users SET password = :password WHERE username = :username";
+    $stmt = $app['db']->prepare($alterarDados);
+    $stmt->bindValue("password", $passAtual['password']);
+    $stmt->bindValue("username", $username);
+    $stmt->execute();
+  }
+  else if($passAtual['password'] != $senhaAtual){
+    exit;
+    return false;
+  }
+  else if($senhaNova1 != $senhaNova2){
+    return false;
+    exit;
+  }
+  else{
+    $sql = "SELECT password FROM users WHERE username = :username";
+    $passAtual = $app['db']->fetchAssoc($sql, array('username' => $username));
+
+    $alterarDados = "UPDATE users SET password = :password WHERE username = :username";
+    $stmt = $app['db']->prepare($alterarDados);
+    $stmt->bindValue("password", $senhaNova1);
+    $stmt->bindValue("username", $username);
+    $stmt->execute();
+    
+  }
+  return $app->json(array(
+    'senhaAtual' => $passAtual['password'],
+    'senhaNova1' => $senhaNova1,
+    'senhaNova2' => $senhaNova2
+  ),200);
 })
 ->bind('profile');
 
