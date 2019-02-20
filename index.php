@@ -92,6 +92,37 @@ $app->post('/login', function(Request $request) use ($app){
 })
 ->bind('verifica-login');
 
+$app->post('/send-coins', function(Request $request) use ($app){
+  $data = json_decode($request->getContent(), true);
+  $username = $data['username'];
+  $coin = $data['coins'];
+
+  $sqlUser = "SELECT username FROM [PainelPlayerGothicPTByArthur].[dbo].[users] WHERE username = :username";
+  $dadosUser = $app['db']->fetchAssoc($sqlUser, array('username' => $username));
+
+  if($dadosUser['username'] != $username){
+    return $app->json(array(
+      'userExist' => false
+    ));
+  }
+  else {
+    $sql = "SELECT coins FROM [PainelPlayerGothicPTByArthur].[dbo].[users] WHERE username = :username";
+    $dados = $app['db']->fetchAssoc($sql, array('username' => $username));
+
+    $dados['coins'] += $coin;
+
+
+    $sql2 = "UPDATE [PainelPlayerGothicPTByArthur].[dbo].[users] SET coins = :coins WHERE username = :username";
+    $stmt = $app['db']->prepare($sql2);
+    $stmt->bindValue("coins", $dados['coins']);
+    $stmt->bindValue("username", $username);
+    $stmt->execute();
+  }
+
+  return true;
+})
+->bind('send-coin');
+
 $app->post('/profile', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
   $username = $data['username'];
@@ -135,7 +166,7 @@ $app->post('/profile', function(Request $request) use ($app){
       'senhaNova1' => $senhaNova1,
       'senhaNova2' => $senhaNova2
     ),200);  
-  }
+  } 
 })
 ->bind('profile');
 
@@ -547,14 +578,14 @@ $app->post('/banir-jogador-success', function(Request $request) use ($app){
 
   $datahoje = date("d/m/Y H:i:s");
 
-  $sql = "select * from [accountdb].[dbo].[".strtoupper($data[idPlayer][0])."GameUser] where userid = :userid";
+  $sql = "select * from [accountdb].[dbo].[".strtoupper($data['idPlayer'][0])."GameUser] where userid = :userid";
   $post = $app['db']->fetchAssoc($sql, array('userid' => $data['idPlayer']));
   $stmt = $app['db']->prepare($sql);
   $stmt->bindValue("userid", $post['userid']);
   $stmt->execute();
 
   $dados = $stmt->fetch(PDO::FETCH_ASSOC);
-  $sql1 = "update [accountdb].[dbo].[".strtoupper($data[idPlayer][0])."GameUser] set blockchk = $punicaoNUM where userid = :userid";
+  $sql1 = "update [accountdb].[dbo].[".strtoupper($data['idPlayer'][0])."GameUser] set blockchk = $punicaoNUM where userid = :userid";
   $stmt = $app['db']->prepare($sql1);
   $stmt->bindValue("userid", $data['idPlayer']);
   $stmt->execute();
