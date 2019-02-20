@@ -102,7 +102,14 @@ $app->post('/profile', function(Request $request) use ($app){
   $sql = "SELECT password FROM users WHERE username = :username";
   $passAtual = $app['db']->fetchAssoc($sql, array('username' => $username));
 
-  if(($senhaNova1 == '') || ($senhaNova2 == '') || ($senhaAtual == '')){
+  if($passAtual['password'] != $senhaAtual){
+    return $app->json(array('samePassword' => false));
+  }
+  else if($senhaNova1 != $senhaNova2){
+    return $app->json(array('diffPass' => true));
+  }
+
+  else if(($senhaNova1 == '') || ($senhaNova2 == '') || ($senhaAtual == '')){
     $sql = "SELECT password FROM users WHERE username = :username";
     $passAtual = $app['db']->fetchAssoc($sql, array('username' => $username));
 
@@ -112,14 +119,7 @@ $app->post('/profile', function(Request $request) use ($app){
     $stmt->bindValue("username", $username);
     $stmt->execute();
   }
-  else if($passAtual['password'] != $senhaAtual){
-    exit;
-    return false;
-  }
-  else if($senhaNova1 != $senhaNova2){
-    return false;
-    exit;
-  }
+  
   else{
     $sql = "SELECT password FROM users WHERE username = :username";
     $passAtual = $app['db']->fetchAssoc($sql, array('username' => $username));
@@ -129,13 +129,13 @@ $app->post('/profile', function(Request $request) use ($app){
     $stmt->bindValue("password", $senhaNova1);
     $stmt->bindValue("username", $username);
     $stmt->execute();
-    
+
+    return $app->json(array(
+      'senhaAtual' => $passAtual['password'],
+      'senhaNova1' => $senhaNova1,
+      'senhaNova2' => $senhaNova2
+    ),200);  
   }
-  return $app->json(array(
-    'senhaAtual' => $passAtual['password'],
-    'senhaNova1' => $senhaNova1,
-    'senhaNova2' => $senhaNova2
-  ),200);
 })
 ->bind('profile');
 
