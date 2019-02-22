@@ -37,10 +37,12 @@ $app->before(function (Request $request, Application $app) {
   $method = $request->getMethod();
   $route = $request->getPathInfo();
 
-  $sql = "SELECT username FROM users WHERE token = :token";
-  $user = $app['db']->fetchAssoc($sql, array('token' => $token));
+  $sql = "SELECT username FROM users WHERE token like :token";
+  $app['user'] = $app['db']->fetchAssoc($sql, array('token' => $token));
+  // $sql = "SELECT username FROM users WHERE token = :token";
+  // $user = $app['db']->fetchAssoc($sql, array('token' => $token));
 
-  if (!$user && $method != 'OPTIONS' && $route != '/login') {
+  if (!$app['user']['username'] && $method != 'OPTIONS' && $route != '/login') {
     return new \Symfony\Component\HttpFoundation\JsonResponse(null, 401);
   }
 }, Application::EARLY_EVENT);
@@ -57,6 +59,36 @@ $app->options("{anything}", function () {
 $app->get('/', function(Application $app){
   return $app->redirect('/painelgmgothicpt/login');
 });
+
+
+
+$app->get('/reboot-server', function(Request $request) use ($app){
+  $username = $app['user']['username'];
+  $iphost = '149.56.201.74';
+  $port = '12874';
+  $Server = 'World';
+
+  $fp = @fsockopen($iphost, $port, $errno, $errstr, 1);
+
+  if($fp){
+    exec("c:\WINDOWS\system32\cmd.exe /c START taskkill  -f -im".$Server.".EXE");
+
+    $data = date("d-m-Y h:i:s A");
+    $app['db']->insert('LogsReboot', array(
+      'username' => $username,
+      'action' => 'Rebooted',
+      'data' => $data
+    ));
+  }
+  else{
+    return $app->json(array(
+      'offline' => true
+    ));
+  }
+
+  return true;
+})
+->bind('reboot-server');
 
 $app->post('/login', function(Request $request) use ($app){
   error_reporting(E_ALL);
@@ -91,6 +123,101 @@ $app->post('/login', function(Request $request) use ($app){
     ),200);
 })
 ->bind('verifica-login');
+
+$app->post('/up-player', function (Request $request) use ($app){
+  error_reporting(E_ALL);
+  ini_set('display_errors', true);
+
+  include_once "class.func.php"; //Favor n�o mecher
+  $func = new Func;
+
+  $rootDir = "C:/ServerPT/";
+  $dirUserData = $rootDir."DataServer/userdata/";
+
+  $data = json_decode($request->getContent(), true);
+  $nick = $data['nickname'];
+  $levelTo = $data['level'];
+  $uppedBy = $data['uppedBy'];
+
+  if(empty($nick)){
+    return $app->json(array(
+      'noNick' => true
+    ));
+  }
+  else{
+    $pasta = $dirUserData.$func->numDir($nick)."/".$nick.".dat";
+    if(!file_exists($pasta)){	
+      return $app->json(array(
+        'naoExiste' => true
+      ));
+    }
+    else{
+      $fp = fopen($pasta,"r");
+      $dados = fread($fp,filesize($pasta));
+      $classe_char = substr($dados,0xc4,1);
+
+      switch(ord($classe_char)){
+        case 1: $class = 'Fighter'; break;
+        case 2: $class = 'Mechanician'; break;
+        case 3: $class = 'Archer'; break;
+        case 4: $class = 'Pikeman'; break;
+        case 5: $class = 'Atalanta'; break;
+        case 6: $class = 'Knight'; break;
+        case 7: $class = 'Magician'; break;
+        case 8: $class = 'Priestess'; break;
+      }
+
+      $fRead=false;
+
+      $fOpen = fopen($pasta, "r");
+      while (!feof($fOpen)){
+        @$fRead = "$fRead" . fread($fOpen, filesize($pasta) );
+      }
+      fclose($fOpen);
+
+      $xphex = fopen('xphex.txt', "r");
+      while (!feof($xphex)){
+        @$xp =$xp . fread($xphex, filesize('xphex.txt') );
+      }
+
+      fclose($xphex);
+      $xp = substr($xp, ($levelTo -1 ) * 14 , 12);
+
+      $level1= pack('i', $levelTo);
+
+      $level2 =substr ($xp, 0, 4);
+      $level2=hexdec("$level2");
+      $level2= pack('i', $level2);
+
+      $level3 =substr ($xp, 4, 8);
+      $level3=hexdec("$level3");
+      $level3= pack('i', $level3);
+
+      $charLevel = substr($fRead,0xc8,1);
+      $charLevel = ord($charLevel);
+      $charlevel2 = $charLevel;
+
+      $sourceStr = substr($fRead, 0 , 200) . $level1 . substr($fRead, 204, 0). ($func->charResetState($class)) . substr($fRead, 224, 108) . $level3 . substr($fRead, 336 ,68) . $level2 . substr($fRead,408, 100) . ($func->charResetSkill()) . substr($fRead, 524);
+
+      $fOpen = fopen($pasta, "wb"); 
+      fwrite($fOpen, $sourceStr, strlen($sourceStr));
+      fclose($fOpen);
+
+      $data = date("m-d-Y h:i:s A");
+
+      $app['db']->insert('LogsLevelUp', array(
+        'nick' => $nick,
+        'oldLevel' => $charlevel2,
+        'newLevel' => $levelTo,
+        'uppedAt' => $data,
+        'uppedBy' => $uppedBy
+      ));      
+    }
+  }
+  
+  return true;
+})
+->bind('up-player');
 
 $app->post('/send-coins', function(Request $request) use ($app){
   $data = json_decode($request->getContent(), true);
