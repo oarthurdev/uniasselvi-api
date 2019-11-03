@@ -2,11 +2,11 @@
 
 $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     'db.options' => array(
-        'driver' => 'pdo_sqlsrv',
-        'host' => 'DESKTOP-U6HOIFA\SQLEXPRESS',
-        'dbname' => 'PainelGMGothicPTByArthur',
-        'user' => 'sa',
-        'password' => '78124770',
+        'driver' => 'pdo_mysql',
+        'host' => 'localhost',
+        'dbname' => 'uniasselvi-projeto',
+        'user' => 'root',
+        'password' => '',
     ),
 ));
 
