@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3456dfc06190e9a5e5d819aa462a6a3a",
+    "content-hash": "2098240e035506e4ae20dd04c63dcca7",
     "packages": [
         {
             "name": "doctrine/common",
@@ -171,6 +171,105 @@
                 "password"
             ],
             "time": "2014-11-20T16:49:30+00:00"
+        },
+        {
+            "name": "liquidbox/silex-pdo",
+            "version": "v2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/liquidbox/silex-pdo.git",
+                "reference": "1de983ecaf5ebbd5a8ca403c16e18b14823fa109"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/liquidbox/silex-pdo/zipball/1de983ecaf5ebbd5a8ca403c16e18b14823fa109",
+                "reference": "1de983ecaf5ebbd5a8ca403c16e18b14823fa109",
+                "shasum": ""
+            },
+            "require": {
+                "silex/silex": "^2.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^2.0",
+                "phpunit/phpunit": "^4.0|^5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "LiquidBox\\": "src/LiquidBox"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jonathan-Paul Marois",
+                    "email": "jonathanpaul.marois@gmail.com"
+                }
+            ],
+            "description": "A PDO service provider for the Silex micro-framework",
+            "keywords": [
+                "database",
+                "mysql",
+                "odbc",
+                "pdo",
+                "php",
+                "postgresql",
+                "provider",
+                "service",
+                "silex",
+                "sqlite"
+            ],
+            "time": "2017-11-30T07:36:07+00:00"
+        },
+        {
+            "name": "localgod/pdo-service-provider",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/localgod/PDOServiceProvider.git",
+                "reference": "af6557622d3769906d999a88c180144293927e94"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/localgod/PDOServiceProvider/zipball/af6557622d3769906d999a88c180144293927e94",
+                "reference": "af6557622d3769906d999a88c180144293927e94",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3",
+                "silex/silex": ">=1.1.1@stable"
+            },
+            "require-dev": {
+                "phpunit/phpunit": ">=3.7.27@stable",
+                "squizlabs/php_codesniffer": ">=1.4.5@stable"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Localgod\\Silex\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Johannes Skov Frandsen",
+                    "email": "localgod@heaven.dk",
+                    "homepage": "https://github.com/localgod",
+                    "role": "Lead"
+                }
+            ],
+            "description": "A PDO ServiceProvider for Silex.",
+            "homepage": "https://github.com/localgod/PDOServiceProvider",
+            "keywords": [
+                "Silex PDO"
+            ],
+            "time": "2013-10-11T14:06:18+00:00"
         },
         {
             "name": "paragonie/random_compat",
@@ -453,6 +552,7 @@
             "keywords": [
                 "microframework"
             ],
+            "abandoned": "symfony/flex",
             "time": "2017-08-29T16:32:48+00:00"
         },
         {
@@ -2014,7 +2114,52 @@
             "time": "2014-02-13T17:24:59+00:00"
         }
     ],
-    "packages-dev": [],
+    "packages-dev": [
+        {
+            "name": "heroku/heroku-buildpack-php",
+            "version": "v164",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/heroku/heroku-buildpack-php.git",
+                "reference": "65bbee93ecc41f8a7d7f909e120c614763079167"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/heroku/heroku-buildpack-php/zipball/65bbee93ecc41f8a7d7f909e120c614763079167",
+                "reference": "65bbee93ecc41f8a7d7f909e120c614763079167",
+                "shasum": ""
+            },
+            "bin": [
+                "bin/heroku-hhvm-apache2",
+                "bin/heroku-hhvm-nginx",
+                "bin/heroku-php-apache2",
+                "bin/heroku-php-nginx"
+            ],
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "David Zuelke",
+                    "email": "dz@heroku.com"
+                }
+            ],
+            "description": "Toolkit for starting a PHP application locally, with or without foreman, using the same config for PHP/HHVM and Apache2/Nginx as on Heroku",
+            "homepage": "https://github.com/heroku/heroku-buildpack-php",
+            "keywords": [
+                "apache",
+                "apache2",
+                "foreman",
+                "heroku",
+                "hhvm",
+                "nginx",
+                "php"
+            ],
+            "time": "2019-10-24T16:05:31+00:00"
+        }
+    ],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {

@@ -10,7 +10,8 @@
 		"symfony/validator": "~2.3",
 		"symfony/config": "~2.3",
 		"symfony/locale": "~2.3",
-		"symfony/security": "~2.3"
+		"symfony/security": "~2.3",
+		"liquidbox/silex-pdo": "2.0"
 	},
 	"require-dev": {
 		"heroku/heroku-buildpack-php": "*"
